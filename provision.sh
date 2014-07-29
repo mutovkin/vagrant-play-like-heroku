@@ -1,29 +1,37 @@
-# Configure apt for mongodb
-# http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
-echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | tee /etc/apt/sources.list.d/mongodb.list
+#Define Java Version
+JAVA_VERSION=6
+#Define Play Version
+PLAY_VERSION=2.1.3
+#Define log file
+LOG_FILE="provision.log"
+
+#F500 Ubuntu 10.04 comes with Dutch servers configured, switch to main
+echo "Configuring Ubuntu APT repositories"
+sed -i 's:nl.::' /etc/apt/sources.list
 
 # Configure apt for java
 # http://www.webupd8.org/2012/01/install-oracle-java-jdk-7-in-ubuntu-via.html
-apt-get update
-apt-get install -y python-software-properties
-add-apt-repository -y ppa:webupd8team/java
-echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
+apt-get update &>> $LOG_FILE
+apt-get install -y python-software-properties &>> $LOG_FILE
+add-apt-repository ppa:webupd8team/java &>> $LOG_FILE
+add-apt-repository ppa:git-core/ppa &>> $LOG_FILE
+echo oracle-java$JAVA_VERSION-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
 
 # Update apt sources
-apt-get update
+apt-get update &>> $LOG_FILE
 
 # Install stuff available through apt-get
-apt-get install -y unzip wget git vim mongodb-10gen oracle-java7-installer oracle-java7-set-default
+echo "Installing Ubuntu system packages"
+apt-get install -y unzip wget git vim oracle-java$JAVA_VERSION-installer oracle-java$JAVA_VERSION-set-default &>> $LOG_FILE
 
-# Install scala and play manually
+
+# Install play manually
+echo "Installing Play Framework"
 cd /opt
-wget http://www.scala-lang.org/files/archive/scala-2.10.3.tgz
-tar -zxvf scala-2.10.3.tgz
-wget http://downloads.typesafe.com/play/2.2.1/play-2.2.1.zip
-unzip play-2.2.1.zip
-chmod +x /opt/play-2.2.1/play
-chmod +x /opt/play-2.2.1/framework/build
-chmod -R a+rw /opt/play-2.2.1/*
+wget --quiet http://downloads.typesafe.com/play/$PLAY_VERSION/play-$PLAY_VERSION.zip
+unzip -qq play-$PLAY_VERSION.zip
+chmod +x /opt/play-$PLAY_VERSION/play
+chmod +x /opt/play-$PLAY_VERSION/framework/build
+chmod -R a+rw /opt/play-$PLAY_VERSION/*
 
-echo 'PATH=${PATH}:/opt/scala-2.10.3/bin:/opt/play-2.2.1' >> /etc/profile
+echo 'PATH=${PATH}:/opt/play-'$PLAY_VERSION >> /etc/profile
